@@ -2,8 +2,9 @@
 
 let diceArr = [];
 let diceValueCounter = {};
+let diceClickedCounter = {};
 let prevDicePoints = 0;
-let currentDicePoints = 0;
+let clickedPoints = 0;
 const ROLLEDONE = 100;
 const ROLLEDFIVE = 50;
 const TRIPLES = {
@@ -26,89 +27,144 @@ function initializeDice() {
 
 /*Rolling dice values*/
 function rollDice() {
+  document.querySelector(".potential-score").innerHTML = 0;
   console.log("rolling or rerolling some die! Lady luck be with you");
+  diceValueCounter = {};
+  diceClickedCounter = {};
   for (let i = 0; i < 6; i++) {
     if (diceArr[i].clicked === 0) {
       const dieIdBeingRolled = i + 1;
 
-      //   console.log("die id thats being rolled", dieIdBeingRolled);
       diceArr[i].value = Math.floor(Math.random() * 6 + 1);
       updateDiceImg(dieIdBeingRolled);
     }
   }
-  checkForPoints(diceArr);
-  console.log(diceValueCounter);
-  //   console.log("New values for the Die", diceArr);
+  let score = checkForPoints(diceArr, diceValueCounter);
+  if (score == 0) {
+    alert("BUSTED!");
+    initializeDice();
+    let die = document.querySelectorAll(".transparent");
+    for (dice in die) {
+      dice.classList.remove("transparent");
+    }
+  }
 }
 
 /* Handle dice click */
 function diceClick(img) {
   let i = img.getAttribute("data-number");
-  //   console.log(i);
+  const clickedNumber = diceArr[i].value;
   img.classList.toggle("transparent");
   if (diceArr[i].clicked === 0) {
     diceArr[i].clicked = 1;
+    if (clickedNumber in diceClickedCounter) {
+      diceClickedCounter[clickedNumber]++;
+      let triplePoints = checkForTriple(diceClickedCounter, clickedNumber);
+      if (triplePoints != undefined && clickedNumber == 1) {
+        clickedPoints -= 200;
+      }
+      if (triplePoints && clickedNumber == 5) {
+        clickedPoints -= 100;
+      }
+      clickedPoints += triplePoints;
+      clickedPoints += checkForOneAndFives(diceClickedCounter, clickedNumber);
+    } else {
+      diceClickedCounter[clickedNumber] = 1;
+      clickedPoints += checkForOneAndFives(diceClickedCounter);
+    }
   } else {
     diceArr[i].clicked = 0;
+    diceClickedCounter[clickedNumber]--;
+    if (diceClickedCounter[clickedNumber] == 0) {
+      delete diceClickedCounter[clickedNumber];
+    }
+    if (diceClickedCounter[clickedNumber] == 2) {
+      clickedPoints -= TRIPLES[clickedNumber];
+    }
+    if (clickedNumber == 1) {
+      clickedPoints -= ROLLEDONE;
+    }
+    if (clickedNumber == 5) {
+      clickedPoints -= ROLLEDFIVE;
+    }
   }
+  document.querySelector(".potential-score").innerHTML = clickedPoints;
 }
 
 //Check for house rules to add up potential points
-function checkForPoints(diceArr) {
+function checkForPoints(diceArr, diceCounter) {
+  let score = 0;
   for (let i = 0; i < 6; i++) {
     if (diceArr[i].clicked == 0) {
       const rolledNumber = diceArr[i].value;
-      if (rolledNumber in diceValueCounter) {
-        diceValueCounter[rolledNumber]++;
-        checkForTriple(rolledNumber);
+      if (rolledNumber in diceCounter) {
+        diceCounter[rolledNumber]++;
+        score += checkForTriple(rolledNumber);
       } else {
-        diceValueCounter[rolledNumber] = 1;
+        diceCounter[rolledNumber] = 1;
       }
     }
   }
-  console.log(diceValueCounter);
-  checkForOneAndFives();
-  diceValueCounter = {};
+  score += checkForOneAndFives(diceCounter);
+  return score;
 }
 
-function checkForOneAndFives() {
+// checks if there are any ones and fives less than triple
+function checkForOneAndFives(diceCounter) {
+  console.log("checking for ones and fives", diceCounter);
   let fiveScore = 0;
   let oneScore = 0;
-  if (5 in diceValueCounter && diceValueCounter[5] <= 2) {
-    fiveScore = ROLLEDFIVE * diceValueCounter[5];
-    currentDicePoints = fiveScore;
+  if (5 in diceCounter && diceCounter[5] <= 2) {
+    fiveScore = ROLLEDFIVE * diceCounter[5];
     const p = document.createElement("p");
-    p.innerHTML = `You have rolled ${diceValueCounter[5]} five for 
+    p.innerHTML = `You have rolled ${diceCounter[5]} five for 
 		  ${fiveScore} points!`;
     document.querySelector(".announcement").append(p);
   }
-  if (1 in diceValueCounter && diceValueCounter[1] <= 2) {
-    oneScore = ROLLEDFIVE * diceValueCounter[1];
-    currentDicePoints = oneScore;
+  if (1 in diceCounter && diceCounter[1] <= 2) {
+    oneScore = ROLLEDONE * diceCounter[1];
     const p = document.createElement("p");
-    p.innerHTML = `You have rolled ${diceValueCounter[1]} five for 
+    p.innerHTML = `You have rolled ${diceCounter[1]} one for 
 		  ${oneScore} points!`;
     document.querySelector(".announcement").append(p);
   }
+  console.log(fiveScore + oneScore);
   return fiveScore + oneScore;
 }
 
-function checkForTriple(rolledNumber) {
+// checks if there are any triples in the set
+function checkForTriple(diceCounter, rolledNumber) {
   let score = 0;
-  if (diceValueCounter[rolledNumber] == 3) {
+  if (diceCounter[rolledNumber] == 3) {
     score = TRIPLES[rolledNumber];
     const p = document.createElement("p");
     p.innerHTML = `You have rolled a triple of ${rolledNumber} for 
 		  ${TRIPLES[rolledNumber]} points!`;
     document.querySelector(".announcement").append(p);
   }
+
   return score;
 }
 
 /*Updating images of dice given values of rollDice*/
 function updateDiceImg(dieId) {
   //   console.log("updatingDiceImg");
-  let diceImageName = `images/${diceArr[dieId - 1].value}.png`;
+  const dieIndex = dieId - 1;
+  let diceImageName = `images/${diceArr[dieIndex].value}.png`;
   //   console.log("Whats the die id?", dieId);
   document.getElementById(`die${dieId}`).setAttribute("src", diceImageName);
+}
+
+function bankScore() {
+  document.querySelector(".score").innerHTML = clickedPoints;
+  document.querySelector(".potential-score").innerHTML = 0;
+  clickedPoints = 0;
+  handleWin();
+}
+
+function handleWin() {
+  if (document.querySelector(".score").innerHTML >= 1000) {
+    alert("YOU WIN!");
+  }
+  initializeDice();
 }

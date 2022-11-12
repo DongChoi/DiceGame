@@ -28,7 +28,7 @@ function initializeDice() {
 
 /*Rolling dice values*/
 function rollDice() {
-  prevDicePoints = clickedPoints;
+  prevDicePoints += clickedPoints;
   clickedPoints = 0;
   document.querySelector(".potential-score").innerHTML = prevDicePoints;
   console.log("rolling or rerolling some die! Lady luck be with you");

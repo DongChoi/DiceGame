@@ -42,11 +42,14 @@ function rollDice() {
   let score = checkForPoints(diceArr, diceValueCounter);
   if (score == 0) {
     alert("BUSTED!");
-    initializeDice();
-    let die = document.querySelectorAll(".transparent");
-    for (dice in die) {
-      dice.classList.remove("transparent");
-    }
+    document.querySelector(
+      ".dice"
+    ).innerHTML = `<img src="images/1.png" id="die1" data-number="0" onclick="diceClick(this)">
+	  <img src="images/2.png" id="die2" data-number="1" onclick="diceClick(this)">
+	  <img src="images/3.png" id="die3" data-number="2" onclick="diceClick(this)">
+	  <img src="images/4.png" id="die4" data-number="3" onclick="diceClick(this)">
+	  <img src="images/5.png" id="die5" data-number="4" onclick="diceClick(this)">
+	  <img src="images/6.png" id="die6" data-number="5" onclick="diceClick(this)">`;
   }
 }
 
@@ -60,11 +63,15 @@ function diceClick(img) {
     if (clickedNumber in diceClickedCounter) {
       diceClickedCounter[clickedNumber]++;
       let triplePoints = checkForTriple(diceClickedCounter, clickedNumber);
-      if (triplePoints != undefined && clickedNumber == 1) {
+      if (triplePoints && clickedNumber == 1) {
         clickedPoints -= 200;
+      } else if (clickedNumber == 1) {
+        clickedPoints += 100;
       }
       if (triplePoints && clickedNumber == 5) {
         clickedPoints -= 100;
+      } else if (clickedNumber == 5) {
+        clickedPoints += 50;
       }
       clickedPoints += triplePoints;
       clickedPoints += checkForOneAndFives(diceClickedCounter, clickedNumber);
@@ -166,5 +173,12 @@ function handleWin() {
   if (document.querySelector(".score").innerHTML >= 1000) {
     alert("YOU WIN!");
   }
-  initializeDice();
+  document.querySelector(
+    ".dice"
+  ).innerHTML = `<img src="images/1.png" id="die1" data-number="0" onclick="diceClick(this)">
+  <img src="images/2.png" id="die2" data-number="1" onclick="diceClick(this)">
+  <img src="images/3.png" id="die3" data-number="2" onclick="diceClick(this)">
+  <img src="images/4.png" id="die4" data-number="3" onclick="diceClick(this)">
+  <img src="images/5.png" id="die5" data-number="4" onclick="diceClick(this)">
+  <img src="images/6.png" id="die6" data-number="5" onclick="diceClick(this)">`;
 }
